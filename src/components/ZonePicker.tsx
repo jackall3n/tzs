@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatClock, offsetLabel } from '../lib/time'
+import { useKeyboardViewport, useScrollLock } from '../lib/useKeyboardInset'
 import { searchZones } from '../lib/zones'
 
 interface ZonePickerProps {
@@ -13,6 +14,8 @@ interface ZonePickerProps {
 export function ZonePicker({ selected, now, use24h, onAdd, onClose }: ZonePickerProps) {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const { inset, height } = useKeyboardViewport()
+  useScrollLock()
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -36,7 +39,17 @@ export function ZonePicker({ selected, now, use24h, onAdd, onClose }: ZonePicker
         className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative flex max-h-[75dvh] flex-col rounded-t-2xl border-t border-slate-700 bg-slate-900 shadow-2xl">
+      <div
+        className="relative flex max-h-[75dvh] flex-col rounded-t-2xl border-t border-slate-700 bg-slate-900 shadow-2xl"
+        // With the keyboard up, lift the sheet above it and let it use the
+        // full visible height so the results list stays reachable (iOS keeps
+        // fixed elements behind the keyboard otherwise)
+        style={
+          inset > 0
+            ? { marginBottom: inset, maxHeight: Math.max(220, height - 12) }
+            : undefined
+        }
+      >
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-700" />
         <div className="flex items-center gap-2 p-3">
           <input
@@ -44,6 +57,13 @@ export function ZonePicker({ selected, now, use24h, onAdd, onClose }: ZonePicker
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              // The mobile keyboard's "search" key picks the top match
+              if (e.key === 'Enter') {
+                const first = results.find((z) => !selectedSet.has(z.id))
+                if (first) onAdd(first.id)
+              }
+            }}
             placeholder="Search city, country or zone…"
             autoCapitalize="off"
             autoCorrect="off"

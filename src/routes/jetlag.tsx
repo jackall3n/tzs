@@ -160,26 +160,31 @@ function DayCard({ day, use24h }: { day: DayPlan; use24h: boolean }) {
         )}
       </div>
       <DayBar day={day} />
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-300">
+      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-300">
         <span title="Aim to sleep in this window (local time)">
-          😴 {fmtWindow(day.sleep, use24h)}
+          😴 <span className="text-slate-500">sleep</span>{' '}
+          {fmtWindow(day.sleep, use24h)}
         </span>
         {day.seek && (
           <span title="Get bright light — outdoors if possible">
-            ☀️ {fmtWindow(day.seek, use24h)}
+            ☀️ <span className="text-slate-500">light</span>{' '}
+            {fmtWindow(day.seek, use24h)}
           </span>
         )}
         {day.avoid && (
           <span title="Keep light dim — sunglasses help">
-            🕶️ {fmtWindow(day.avoid, use24h)}
+            🕶️ <span className="text-slate-500">dim</span>{' '}
+            {fmtWindow(day.avoid, use24h)}
           </span>
         )}
         <span title="Last call for caffeine">
-          ☕ until {fmtMin(day.caffeineCutoff, use24h)}
+          ☕ <span className="text-slate-500">until</span>{' '}
+          {fmtMin(day.caffeineCutoff, use24h)}
         </span>
         {day.melatonin !== null && (
           <span title="Optional low-dose melatonin — check with your doctor">
-            💊 {fmtMin(day.melatonin, use24h)}
+            💊 <span className="text-slate-500">melatonin</span>{' '}
+            {fmtMin(day.melatonin, use24h)}
           </span>
         )}
       </div>
@@ -310,11 +315,23 @@ function JetLagPlanner() {
   const findFlight = async (e: FormEvent) => {
     e.preventDefault()
     if (!flightQuery.trim() || flightBusy) return
+    // Dismiss the on-screen keyboard so it doesn't cover the result card
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
     setFlightBusy(true)
     setFlightResult(null)
     setFlightResult(await lookupFlight(flightQuery))
     setFlightBusy(false)
   }
+
+  useEffect(() => {
+    if (flightResult) {
+      document
+        .getElementById('flight-result')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [flightResult])
 
   const clearFlight = () => {
     setFlightQuery('')
@@ -434,7 +451,7 @@ function JetLagPlanner() {
                   e.target.value && updateLeg(leg.id, { arrival: e.target.value })
                 }
                 aria-label={`Arrival date for ${zoneCity(leg.zone)}`}
-                className="shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-2 py-2 text-sm text-slate-100 [color-scheme:dark]"
+                className="shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-2 py-2 text-base text-slate-100 [color-scheme:dark]"
               />
               {journey.legs.length > 1 && (
                 <button
@@ -473,7 +490,7 @@ function JetLagPlanner() {
                 autoCorrect="off"
                 spellCheck={false}
                 enterKeyHint="search"
-                className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 uppercase placeholder:normal-case placeholder:text-slate-500 focus:border-sky-500 focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-base text-slate-100 uppercase placeholder:normal-case placeholder:text-slate-500 focus:border-sky-500 focus:outline-none"
               />
               <button
                 type="submit"
@@ -491,7 +508,10 @@ function JetLagPlanner() {
                   journey.legs[journey.legs.length - 1]?.zone ?? journey.origin
                 const missingZone = !r.origin.zone || !r.destination.zone
                 return (
-                  <div className="mt-2 rounded-lg border border-slate-700 bg-slate-800/60 p-2.5">
+                  <div
+                    id="flight-result"
+                    className="mt-2 rounded-lg border border-slate-700 bg-slate-800/60 p-2.5"
+                  >
                     <p className="text-xs text-slate-400">
                       {r.flightNumber}
                       {r.airline && ` · ${r.airline}`}
@@ -539,13 +559,13 @@ function JetLagPlanner() {
                 )
               })()}
             {flightResult?.status === 'unknown' && (
-              <p className="mt-2 text-xs text-slate-500">
+              <p id="flight-result" className="mt-2 text-xs text-slate-500">
                 Couldn't find that flight — try the airline code + number, like
                 BA15 or UA100.
               </p>
             )}
             {flightResult?.status === 'error' && (
-              <p className="mt-2 text-xs text-rose-400">
+              <p id="flight-result" className="mt-2 text-xs text-rose-400">
                 Lookup failed — check your connection and try again.
               </p>
             )}
@@ -566,7 +586,7 @@ function JetLagPlanner() {
                   if (v !== null)
                     update({ schedule: { ...journey.schedule, bedtime: v } })
                 }}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 [color-scheme:dark]"
+                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-base text-slate-100 [color-scheme:dark]"
               />
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-500">
@@ -579,7 +599,7 @@ function JetLagPlanner() {
                   if (v !== null)
                     update({ schedule: { ...journey.schedule, wake: v } })
                 }}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 [color-scheme:dark]"
+                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-base text-slate-100 [color-scheme:dark]"
               />
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-500">
@@ -587,7 +607,7 @@ function JetLagPlanner() {
               <select
                 value={journey.preShiftDays}
                 onChange={(e) => update({ preShiftDays: Number(e.target.value) })}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 [color-scheme:dark]"
+                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-base text-slate-100 [color-scheme:dark]"
               >
                 <option value={0}>on arrival</option>
                 <option value={1}>1 day early</option>
