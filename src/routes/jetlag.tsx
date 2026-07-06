@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ZonePicker } from '../components/ZonePicker'
+import {
+  lookupFlight,
+  type FlightLookupResult,
+  type FlightRoute,
+} from '../lib/flights'
 import {
   addDays,
   buildPlan,
@@ -297,6 +302,66 @@ function JetLagPlanner() {
   const removeLeg = (id: string) =>
     setJourney((j) => (j ? { ...j, legs: j.legs.filter((l) => l.id !== id) } : j))
 
+  // ------------------------------------------------ flight number lookup
+  const [flightQuery, setFlightQuery] = useState('')
+  const [flightBusy, setFlightBusy] = useState(false)
+  const [flightResult, setFlightResult] = useState<FlightLookupResult | null>(null)
+
+  const findFlight = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!flightQuery.trim() || flightBusy) return
+    setFlightBusy(true)
+    setFlightResult(null)
+    setFlightResult(await lookupFlight(flightQuery))
+    setFlightBusy(false)
+  }
+
+  const clearFlight = () => {
+    setFlightQuery('')
+    setFlightResult(null)
+  }
+
+  const startTripWithFlight = (route: FlightRoute) => {
+    if (!route.origin.zone || !route.destination.zone) return
+    const origin = route.origin.zone
+    setJourney((j) =>
+      j
+        ? {
+            ...j,
+            origin,
+            legs: [
+              {
+                id: `leg-${Date.now()}`,
+                zone: route.destination.zone!,
+                arrival: addDays(todayIn(origin), 7),
+              },
+            ],
+          }
+        : j,
+    )
+    clearFlight()
+  }
+
+  const addFlightAsStop = (route: FlightRoute) => {
+    if (!route.destination.zone) return
+    setJourney((j) => {
+      if (!j) return j
+      const last = j.legs[j.legs.length - 1]
+      return {
+        ...j,
+        legs: [
+          ...j.legs,
+          {
+            id: `leg-${Date.now()}`,
+            zone: route.destination.zone!,
+            arrival: addDays(last?.arrival ?? todayIn(j.origin), 7),
+          },
+        ],
+      }
+    })
+    clearFlight()
+  }
+
   if (!mounted || !journey || !plan) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-slate-500">
@@ -389,6 +454,102 @@ function JetLagPlanner() {
           >
             + Add another stop
           </button>
+
+          <form onSubmit={findFlight} className="mt-3 border-t border-slate-800 pt-3">
+            <label
+              htmlFor="flight-no"
+              className="text-xs font-medium text-slate-400"
+            >
+              ✈️ Or add by flight number
+            </label>
+            <div className="mt-1.5 flex gap-2">
+              <input
+                id="flight-no"
+                type="text"
+                value={flightQuery}
+                onChange={(e) => setFlightQuery(e.target.value)}
+                placeholder="e.g. BA15"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="search"
+                className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 uppercase placeholder:normal-case placeholder:text-slate-500 focus:border-sky-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={flightBusy || !flightQuery.trim()}
+                className="shrink-0 rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950 active:bg-sky-400 disabled:opacity-40"
+              >
+                {flightBusy ? 'Finding…' : 'Find'}
+              </button>
+            </div>
+
+            {flightResult?.status === 'found' &&
+              (() => {
+                const r = flightResult.route
+                const lastZone =
+                  journey.legs[journey.legs.length - 1]?.zone ?? journey.origin
+                const missingZone = !r.origin.zone || !r.destination.zone
+                return (
+                  <div className="mt-2 rounded-lg border border-slate-700 bg-slate-800/60 p-2.5">
+                    <p className="text-xs text-slate-400">
+                      {r.flightNumber}
+                      {r.airline && ` · ${r.airline}`}
+                    </p>
+                    <p className="mt-0.5 text-sm font-medium text-slate-100">
+                      {r.origin.city} ({r.origin.iata}) → {r.destination.city} (
+                      {r.destination.iata})
+                    </p>
+                    {missingZone ? (
+                      <p className="mt-1 text-xs text-amber-400">
+                        This airport's time zone isn't in our data — add the
+                        stop manually above.
+                      </p>
+                    ) : (
+                      <>
+                        {r.origin.zone !== lastZone && (
+                          <p className="mt-1 text-xs text-amber-400/90">
+                            Heads up: this flight departs {r.origin.city}, but
+                            your journey currently ends in {zoneCity(lastZone)}.
+                          </p>
+                        )}
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startTripWithFlight(r)}
+                            className="flex-1 rounded-lg border border-slate-600 py-1.5 text-xs font-medium text-slate-200 active:bg-slate-700"
+                          >
+                            Start trip here
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => addFlightAsStop(r)}
+                            className="flex-1 rounded-lg bg-sky-500 py-1.5 text-xs font-semibold text-slate-950 active:bg-sky-400"
+                          >
+                            Add as next stop
+                          </button>
+                        </div>
+                      </>
+                    )}
+                    <p className="mt-1.5 text-[10px] text-slate-500">
+                      Route data via adsbdb.com — multi-stop flight numbers may
+                      show a single segment, so double-check.
+                    </p>
+                  </div>
+                )
+              })()}
+            {flightResult?.status === 'unknown' && (
+              <p className="mt-2 text-xs text-slate-500">
+                Couldn't find that flight — try the airline code + number, like
+                BA15 or UA100.
+              </p>
+            )}
+            {flightResult?.status === 'error' && (
+              <p className="mt-2 text-xs text-rose-400">
+                Lookup failed — check your connection and try again.
+              </p>
+            )}
+          </form>
         </section>
 
         {/* ------------------------------------------------ routine inputs */}

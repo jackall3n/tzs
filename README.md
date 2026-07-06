@@ -29,6 +29,13 @@ output), React 19 and Tailwind CSS v4.
   timing, caffeine cutoffs and optional melatonin timing. Later legs start
   from wherever your body clock actually got to, with optional pre-trip
   adjustment days at home.
+- **Add stops by flight number** — type e.g. `BA15` and the planner resolves
+  the route via the free, keyless [adsbdb](https://www.adsbdb.com) API and
+  prefills origin/destination time zones (using a bundled, lazy-loaded
+  IATA → IANA airport map generated from
+  [mwgg/Airports](https://github.com/mwgg/Airports)). Routes are a prefill to
+  confirm, not a schedule feed — multi-segment flight numbers may resolve to
+  a single segment.
 
 ## Development
 
