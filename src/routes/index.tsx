@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { TimeGrid } from '../components/TimeGrid'
 import { ZonePicker } from '../components/ZonePicker'
 import { formatClock, formatDate, hourlyInstants, offsetLabel } from '../lib/time'
@@ -132,6 +132,12 @@ function Home() {
           <p className="min-w-0 flex-1 truncate text-xs text-slate-500">
             world time comparison
           </p>
+          <Link
+            to="/jetlag"
+            className="rounded-full border border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 active:bg-slate-800"
+          >
+            ✈️ Jet lag
+          </Link>
           <button
             onClick={() => setUse24h((v) => !v)}
             className="rounded-full border border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 active:bg-slate-800"

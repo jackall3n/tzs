@@ -22,6 +22,13 @@ output), React 19 and Tailwind CSS v4.
 - **Home zone** — the first zone anchors the grid; reorder, re-home or remove
   zones in Edit mode.
 - **12h/24h toggle**, live clocks, and selections persisted to `localStorage`.
+- **Jet lag planner** (`/jetlag`) — plan recovery for any journey, including
+  multi-stop trips. Simulates your body clock (advancing ~1h/day eastward,
+  delaying ~1.5h/day westward, taking the faster way around the clock), and
+  produces a day-by-day schedule of sleep windows, bright-light and dim-light
+  timing, caffeine cutoffs and optional melatonin timing. Later legs start
+  from wherever your body clock actually got to, with optional pre-trip
+  adjustment days at home.
 
 ## Development
 
