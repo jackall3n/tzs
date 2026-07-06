@@ -25,15 +25,17 @@ output), React 19 and Tailwind CSS v4.
 
 ## Development
 
+Uses [Bun](https://bun.sh) as the package manager and script runner.
+
 ```sh
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ## Build (static output)
 
 ```sh
-npm run build
+bun run build
 ```
 
 The site is prerendered to static files in `dist/client/` — deploy that
