@@ -4,8 +4,8 @@ A mobile-friendly world time comparison tool — a
 [worldtimebuddy](https://www.worldtimebuddy.com/)-style hourly grid for lining
 up the time across any number of time zones.
 
-Built with [TanStack Start](https://tanstack.com/start) (static prerendered
-output), React 19 and Tailwind CSS v4.
+Built with [TanStack Start](https://tanstack.com/start), React 19 and
+Tailwind CSS v4.
 
 ## Features
 
@@ -32,11 +32,13 @@ bun install
 bun run dev
 ```
 
-## Build (static output)
+## Build
 
 ```sh
 bun run build
+bun run preview
 ```
 
-The site is prerendered to static files in `dist/client/` — deploy that
-directory to any static host.
+Static prerendered output is not enabled yet — the build produces a standard
+TanStack Start server (`dist/`). To switch to static output later, enable
+`prerender` in the `tanstackStart()` plugin options in `vite.config.ts`.
