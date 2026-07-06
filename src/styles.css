@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  color-scheme: dark;
+}
+
+/* Hide scrollbars on the hour grid but keep it scrollable */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
